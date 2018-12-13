@@ -1,0 +1,56 @@
+version: "3"
+
+services:
+
+  api-app:
+    build: . #run the dockerfile to install whatever
+    env_file: .env
+    volumes:
+      - ./:/var/www
+    environment:
+      - "DB_PORT=3306"
+      - "DB_HOST=database"
+    depends_on:
+      - database
+
+  api-web:
+    image: nginx:1.10
+    volumes:
+      - ./:/var/www
+      - ./vhost.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "8080:80"
+    depends_on:
+      - api-app
+    restart: always
+
+  frontend-app:
+    build: .
+    env_file: ../laravel-frontend/.env
+    volumes:
+      - ../laravel-frontend:/var/www
+
+  frontend-web:
+    image: nginx:1.10
+    volumes:
+      - ../laravel-frontend/vhost.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "8081:81"
+    depends_on:
+      - frontend-app
+
+  database:
+    image: mysql:5.7
+    environment:
+      - "MYSQL_DATABASE=laravel-passport"
+      - "MYSQL_USER=root"
+      - "MYSQL_PASSWORD=password"
+      - "MYSQL_ROOT_PASSWORD=password"
+    ports:
+      - "33061:3306"
+    volumes:
+      - db:/var/lib/mysql
+    restart: always
+
+volumes:
+  db:
